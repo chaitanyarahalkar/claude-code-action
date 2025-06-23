@@ -69,6 +69,9 @@ async def run() -> None:
         await octokit.rest.patch(endpoint, {"body": comment_body})
 
         print("Comment updated successfully")
+        
+        # Clean up the session
+        await octokit.close()
 
     except Exception as error:
         error_message = str(error)

@@ -28,6 +28,7 @@ def set_output(name: str, value: str) -> None:
         with open(github_output, "a") as f:
             f.write(f"{name}={value}\n")
     else:
+        # Fallback for older runners
         print(f"::set-output name={name}::{value}")
 
 
@@ -125,6 +126,9 @@ async def run() -> None:
             allowed_tools=context.inputs.allowed_tools,
         )
         set_output("mcp_config", mcp_config)
+        
+        # Clean up the session
+        await octokit.close()
 
     except Exception as error:
         error_message = str(error)

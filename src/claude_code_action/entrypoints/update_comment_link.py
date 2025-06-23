@@ -41,9 +41,32 @@ async def run() -> None:
         # Create GitHub client
         octokit = create_octokit(github_token)
 
-        # Update comment with job link
-        # This would contain the logic to update the GitHub comment
-        # with the job run link and other relevant information
+        # Create the updated comment body
+        github_server_url = os.environ.get("GITHUB_SERVER_URL", "https://github.com")
+        job_link = f"{github_server_url}/{repository}/actions/runs/{github_run_id}"
+        
+        # Determine status and create appropriate message
+        if not prepare_success:
+            comment_body = f"❌ **Failed to prepare Claude request**\n\n"
+            if prepare_error:
+                comment_body += f"Error: {prepare_error}\n\n"
+            comment_body += f"[View run details]({job_link})"
+        elif claude_success:
+            comment_body = f"✅ **Request completed successfully**\n\n"
+            if claude_branch:
+                comment_body += f"Branch: `{claude_branch}`\n\n"
+            if output_file:
+                comment_body += f"Changes have been made to your codebase.\n\n"
+            comment_body += f"[View run details]({job_link})"
+        else:
+            comment_body = f"❌ **Request failed**\n\n"
+            if claude_branch:
+                comment_body += f"Branch: `{claude_branch}`\n\n"
+            comment_body += f"[View run details]({job_link})"
+
+        # Update the comment
+        endpoint = f"repos/{repository}/issues/comments/{claude_comment_id}"
+        await octokit.rest.patch(endpoint, {"body": comment_body})
 
         print("Comment updated successfully")
 

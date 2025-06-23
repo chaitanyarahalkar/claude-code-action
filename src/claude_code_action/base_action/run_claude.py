@@ -209,7 +209,15 @@ async def run_claude(prompt_path: str, options: Dict[str, Optional[str]]) -> Non
                 stderr_text = stderr_output.decode()
                 print(f"Claude stderr: {stderr_text}")
                 if exit_code != 0:
-                    print(f"::error::Claude failed with exit code {exit_code}: {stderr_text}")
+                    error_msg = f"Claude failed with exit code {exit_code}: {stderr_text}"
+                    print(f"::error::{error_msg}")
+                    
+                    # Add specific guidance for common Bedrock issues
+                    if use_bedrock and "404" in stderr_text:
+                        print("::error::Bedrock 404 troubleshooting:")
+                        print("::error::1. Ensure the model is enabled in AWS Bedrock console")
+                        print("::error::2. Verify AWS credentials have bedrock:InvokeModel permission")
+                        print(f"::error::3. Check if model '{model}' is available in region '{aws_region}'")
         
         # Wait for output reading to complete
         try:

@@ -70,6 +70,7 @@ async def run() -> None:
 
         if not contains_trigger:
             print("No trigger found, skipping remaining steps")
+            set_output("contains_trigger", "false")
             return
 
         # Step 5: Check if actor is human
@@ -89,6 +90,13 @@ async def run() -> None:
 
         # Step 8: Setup branch
         branch_info = await setup_branch(octokit, github_data, context)
+
+        # Set outputs for GitHub Actions
+        set_output("claude_comment_id", str(comment_id))
+        set_output("CLAUDE_BRANCH", branch_info.claude_branch or "")
+        set_output("BASE_BRANCH", branch_info.base_branch)
+        set_output("GITHUB_TOKEN", github_token)
+        set_output("contains_trigger", "true")
 
         # Step 9: Update initial comment with branch link (only for issues that created a new branch)
         if branch_info.claude_branch:

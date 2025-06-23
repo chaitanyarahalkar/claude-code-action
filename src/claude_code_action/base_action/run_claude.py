@@ -139,14 +139,14 @@ async def run_claude(prompt_path: str, options: Dict[str, Optional[str]]) -> Non
         print(f"AWS Session Token set: {aws_session_token_set}")
         print(f"Bedrock Base URL: {bedrock_base_url}")
     
-    print(f"Claude command: {' '.join(claude_cmd)}")
-    
     # Prepare environment
     process_env = os.environ.copy()
     process_env.update(config.env)
     
     # Create the full claude command with prompt file input
     claude_cmd = ["claude"] + config.claude_args + [config.prompt_path]
+    
+    print(f"Claude command: {' '.join(claude_cmd)}")
     
     # Capture output
     output = ""

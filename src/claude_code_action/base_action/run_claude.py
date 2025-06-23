@@ -117,6 +117,30 @@ async def run_claude(prompt_path: str, options: Dict[str, Optional[str]]) -> Non
     
     print(f"Running Claude with prompt from file: {config.prompt_path}")
     
+    # Debug environment variables
+    model = os.environ.get("ANTHROPIC_MODEL", "")
+    use_bedrock = os.environ.get("CLAUDE_CODE_USE_BEDROCK") == "1"
+    use_vertex = os.environ.get("CLAUDE_CODE_USE_VERTEX") == "1"
+    
+    print(f"Model: {model}")
+    print(f"Use Bedrock: {use_bedrock}")
+    print(f"Use Vertex: {use_vertex}")
+    
+    if use_bedrock:
+        aws_region = os.environ.get("AWS_REGION", "")
+        aws_access_key_set = "Yes" if os.environ.get("AWS_ACCESS_KEY_ID") else "No"
+        aws_secret_key_set = "Yes" if os.environ.get("AWS_SECRET_ACCESS_KEY") else "No"
+        aws_session_token_set = "Yes" if os.environ.get("AWS_SESSION_TOKEN") else "No"
+        bedrock_base_url = os.environ.get("ANTHROPIC_BEDROCK_BASE_URL", "")
+        
+        print(f"AWS Region: {aws_region}")
+        print(f"AWS Access Key set: {aws_access_key_set}")
+        print(f"AWS Secret Key set: {aws_secret_key_set}")
+        print(f"AWS Session Token set: {aws_session_token_set}")
+        print(f"Bedrock Base URL: {bedrock_base_url}")
+    
+    print(f"Claude command: {' '.join(claude_cmd)}")
+    
     # Prepare environment
     process_env = os.environ.copy()
     process_env.update(config.env)

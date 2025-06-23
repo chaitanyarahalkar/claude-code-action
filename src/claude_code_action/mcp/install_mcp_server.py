@@ -20,15 +20,21 @@ async def prepare_mcp_config(
     # - Merge additional MCP config
     # - Return JSON configuration string
     
+    # Create valid MCP configuration with required mcpServers field
     base_config = {
-        "github": {
-            "token": github_token,
-            "owner": owner,
-            "repo": repo,
-            "branch": branch,
-            "comment_id": claude_comment_id,
-        }
+        "mcpServers": {}
     }
+    
+    # If additional MCP config is provided, merge it
+    if additional_mcp_config and additional_mcp_config.strip():
+        try:
+            import json
+            additional_config = json.loads(additional_mcp_config)
+            if isinstance(additional_config, dict) and "mcpServers" in additional_config:
+                base_config["mcpServers"].update(additional_config["mcpServers"])
+        except json.JSONDecodeError:
+            # Invalid JSON, ignore additional config
+            pass
     
     import json
     return json.dumps(base_config)

@@ -178,6 +178,15 @@ async def run_claude(prompt_path: str, options: Dict[str, Optional[str]]) -> Non
                 pass
             exit_code = 124  # Standard timeout exit code
         
+        # Capture stderr for debugging
+        if claude_process.stderr:
+            stderr_output = await claude_process.stderr.read()
+            if stderr_output:
+                stderr_text = stderr_output.decode()
+                print(f"Claude stderr: {stderr_text}")
+                if exit_code != 0:
+                    print(f"::error::Claude failed with exit code {exit_code}: {stderr_text}")
+        
         # Wait for output reading to complete
         try:
             await asyncio.wait_for(output_task, timeout=5)
@@ -209,10 +218,21 @@ async def run_claude(prompt_path: str, options: Dict[str, Optional[str]]) -> Non
             except Exception as e:
                 print(f"::warning::Failed to process output for execution metrics: {e}")
             
-            print(f"::set-output name=conclusion::success")
-            print(f"::set-output name=execution_file::{execution_file}")
+            # Set GitHub Actions outputs
+            if github_output := os.environ.get("GITHUB_OUTPUT"):
+                with open(github_output, "a") as f:
+                    f.write(f"conclusion=success\n")
+                    f.write(f"execution_file={execution_file}\n")
+            else:
+                print(f"::set-output name=conclusion::success")
+                print(f"::set-output name=execution_file::{execution_file}")
         else:
-            print(f"::set-output name=conclusion::failure")
+            # Set GitHub Actions outputs for failure
+            if github_output := os.environ.get("GITHUB_OUTPUT"):
+                with open(github_output, "a") as f:
+                    f.write(f"conclusion=failure\n")
+            else:
+                print(f"::set-output name=conclusion::failure")
             
             # Still try to save execution file if we have output
             if output:
@@ -231,7 +251,12 @@ async def run_claude(prompt_path: str, options: Dict[str, Optional[str]]) -> Non
                     async with aiofiles.open(execution_file, 'w') as f:
                         await f.write(result.stdout)
                     
-                    print(f"::set-output name=execution_file::{execution_file}")
+                    # Set execution file output
+                    if github_output := os.environ.get("GITHUB_OUTPUT"):
+                        with open(github_output, "a") as f:
+                            f.write(f"execution_file={execution_file}\n")
+                    else:
+                        print(f"::set-output name=execution_file::{execution_file}")
                     os.unlink(temp_file_path)
                     
                 except Exception:
@@ -241,5 +266,10 @@ async def run_claude(prompt_path: str, options: Dict[str, Optional[str]]) -> Non
             
     except Exception as e:
         print(f"::error::Failed to run Claude: {e}")
-        print(f"::set-output name=conclusion::failure")
+        # Set GitHub Actions outputs for failure
+        if github_output := os.environ.get("GITHUB_OUTPUT"):
+            with open(github_output, "a") as f:
+                f.write(f"conclusion=failure\n")
+        else:
+            print(f"::set-output name=conclusion::failure")
         sys.exit(1)

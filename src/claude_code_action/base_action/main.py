@@ -34,7 +34,12 @@ async def run() -> None:
         
     except Exception as error:
         print(f"::error::Action failed with error: {error}")
-        print(f"::set-output name=conclusion::failure")
+        # Set GitHub Actions outputs for failure
+        if github_output := os.environ.get("GITHUB_OUTPUT"):
+            with open(github_output, "a") as f:
+                f.write(f"conclusion=failure\n")
+        else:
+            print(f"::set-output name=conclusion::failure")
         sys.exit(1)
 
 
